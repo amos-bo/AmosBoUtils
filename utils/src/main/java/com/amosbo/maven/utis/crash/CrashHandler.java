@@ -2,7 +2,9 @@ package com.amosbo.maven.utis.crash;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
+
+import com.amosbo.maven.utis.LogUtils;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -67,7 +69,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
             ex.printStackTrace(pw);
             pw.flush();
             String stackTrace = sw.toString();
-            Log.e("Amosbo_error", "发生异常：" + stackTrace);
+            LogUtils.e("Amosbo_error", "发生异常：" + stackTrace);
             String throwType = ex.getClass().getName();
             String throwCause = ex.getMessage();
             String throwClassName;
@@ -89,7 +91,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
             //常规java、c#的标准退出法，返回值为0代表正常退出
             System.exit(0);
         } catch (Exception e) {
-            Log.e("CrashHandler", "error : " + e);
+            LogUtils.e("CrashHandler", "error : " + e);
         }
     }
 }

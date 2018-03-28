@@ -1,7 +1,6 @@
 package com.amosbo.maven.utis.time;
 
 import android.text.TextUtils;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
