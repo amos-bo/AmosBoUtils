@@ -32,7 +32,7 @@ uploadArchives{
         pom.project{
             groupId "com.amosbo"
             artifactId"utils"
-            version "0.2"
+            version "0.1"
         }
     }
 }
