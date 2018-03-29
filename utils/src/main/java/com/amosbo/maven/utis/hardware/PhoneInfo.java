@@ -1,9 +1,5 @@
 package com.amosbo.maven.utis.hardware;
 
-import android.os.Build;
-
-import com.amosbo.maven.utis.string.StringUtils;
-
 import java.io.Serializable;
 
 /**
@@ -55,13 +51,21 @@ public class PhoneInfo implements Serializable {
      * 手机操作平台
      */
     private String platform;
+    /**
+     * 手机IMEI
+     */
+    private String imei;
+    /**
+     * 手机IP
+     */
+    private String ip;
 
     public PhoneInfo() {
     }
 
     public PhoneInfo(long appVersionCode, String appVersion, String brand, String
             simOperatorName, String model, String SDK, String release, String manufacturer,
-                     String platform) {
+                     String platform, String imei, String ip) {
         this.appVersionCode = appVersionCode;
         this.appVersion = appVersion;
         this.brand = brand;
@@ -71,6 +75,8 @@ public class PhoneInfo implements Serializable {
         this.release = release;
         this.manufacturer = manufacturer;
         this.platform = platform;
+        this.imei = imei;
+        this.ip = ip;
     }
 
     public long getAppVersionCode() {
@@ -143,5 +149,21 @@ public class PhoneInfo implements Serializable {
 
     public void setPlatform(String platform) {
         this.platform = platform;
+    }
+
+    public String getImei() {
+        return imei;
+    }
+
+    public void setImei(String imei) {
+        this.imei = imei;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 }

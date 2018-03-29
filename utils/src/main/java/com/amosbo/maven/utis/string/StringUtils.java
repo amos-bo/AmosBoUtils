@@ -1,5 +1,6 @@
 package com.amosbo.maven.utis.string;
 
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import com.amosbo.maven.utis.Constants;
@@ -119,8 +120,19 @@ public class StringUtils {
      * @param email CharSequence
      * @return boolean
      */
-    public static boolean isValidEmail(CharSequence email) {
+    public static boolean isValidEmail(@NonNull CharSequence email) {
         return email != null && Constants.EMAIL_PATTERN.matcher(email).matches();
+    }
+
+    /**
+     * 是否是电话号码
+     *
+     * @param phonenumber String
+     * @return boolean
+     */
+    public boolean isPhoneNumber(@NonNull CharSequence phonenumber) {
+        Matcher ma = Constants.PHONENUMBER_PATTERN.matcher(phonenumber);
+        return phonenumber != null && ma.matches();
     }
 
     /**
@@ -133,8 +145,35 @@ public class StringUtils {
         if (TextUtils.isEmpty(str)) {
             return false;
         }
-        Pattern pattern = Pattern.compile("[0-9]*");
+        Pattern pattern = Constants.NUMBER_PATTERN;
         return pattern.matcher(str).matches();
+    }
+
+    /**
+     * 是否是合法的密码
+     *
+     * @param pwd String
+     * @return boolean
+     */
+    public boolean isLegalPwd(String pwd) {
+        //匹配英文符号((?=[\x21-\x7e]+)[^A-Za-z0-9])
+        Pattern symbolPa = Pattern.compile("[^\\da-zA-Z\\u4e00-\\u9fa5]");//非数字、字母、中文
+        Pattern numPa = Pattern.compile("\\d");
+        Pattern letterPa = Pattern.compile("[a-zA-Z]");
+        int localInt = 0;
+        Matcher symbolMa = symbolPa.matcher(pwd);
+        Matcher numMa = numPa.matcher(pwd);
+        Matcher letterMa = letterPa.matcher(pwd);
+        if (symbolMa.find()) {
+            localInt++;
+        }
+        if (numMa.find()) {
+            localInt++;
+        }
+        if (letterMa.find()) {
+            localInt++;
+        }
+        return localInt >= 2;
     }
 
     /**

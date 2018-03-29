@@ -25,4 +25,6 @@ public class Constants {
                     "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
                     ")+"
     );
+    public static final Pattern PHONENUMBER_PATTERN = Pattern.compile("^[1][3,4,5,7,8][0-9]{9}$");
+    public static final Pattern NUMBER_PATTERN =Pattern.compile("[0-9]*");
 }

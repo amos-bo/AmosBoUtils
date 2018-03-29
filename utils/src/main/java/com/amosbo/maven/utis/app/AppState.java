@@ -2,15 +2,22 @@ package com.amosbo.maven.utis.app;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Application;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.text.TextUtils;
 
 import com.amosbo.maven.utis.Constants;
 import com.amosbo.maven.utis.LogUtils;
+import com.amosbo.maven.utis.ToastUtils;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -81,6 +88,112 @@ public class AppState {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setData(Uri.parse(url));
         context.startActivity(Intent.createChooser(intent, "打开"));
+    }
+
+    /**
+     * 跳转应用市场
+     *
+     * @param context
+     * @param packageName
+     */
+    public static void goToMarket(Context context, String packageName) {
+        Uri uri = Uri.parse("market://details?id=" + packageName);
+        Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+        try {
+            context.startActivity(goToMarket);
+        } catch (ActivityNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @param context  Context
+     * @param filePath String
+     * @return int  0 不完整 1完整但包名错误 2 完整且正确
+     */
+    public static int isApkCanInstall(Context context, String filePath) {
+        int result = 0;
+        try {
+            PackageManager pm = context.getPackageManager();
+            PackageInfo info = pm.getPackageArchiveInfo(filePath, PackageManager.GET_ACTIVITIES);
+            if (info != null && !TextUtils.isEmpty(info.packageName)) {
+                if (info.packageName.equals(context.getPackageName())) {
+                    //完整
+                    result = 2;
+                } else {
+                    //完整
+                    result = 1;
+                }
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    /**
+     * 是否安装应用
+     *
+     * @param context
+     * @param packageName
+     * @return
+     */
+    public static boolean isAppInstalled(Context context, String packageName) {
+        try {
+            context.getPackageManager().getPackageInfo(packageName, 0);
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    /**
+     * 安装apk
+     */
+    public void instanceApk(Application application, File file) {
+        Intent intent = new Intent();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.fromFile(file),
+                "application/vnd.android.package-archive");
+        application.getApplicationContext().startActivity(intent);
+    }
+
+    /**
+     * 启动App
+     */
+    public static void launchApp(Context context, String packageName) {
+        // 判断是否安装过App，否则去市场下载
+        if (isAppInstalled(context, packageName)) {
+            context.startActivity(context.getPackageManager().getLaunchIntentForPackage
+                    (packageName));
+        } else {
+            goToMarket(context, packageName);
+        }
+    }
+
+    /**
+     * @param
+     * @return String
+     * @description 获取APPLICATION metadata的数据
+     * @date 2015-09-12
+     * @Exception
+     */
+    public static Object getApplicationMetaData(Context context, String key) {
+        Object sRst = null;
+        ApplicationInfo appInfo = null;
+        if (context == null || TextUtils.isEmpty(key)) {
+            return null;
+        }
+        try {
+            appInfo = context.getPackageManager()
+                    .getApplicationInfo(context.getPackageName(),
+                            PackageManager.GET_META_DATA);
+            sRst = "" + appInfo.metaData.get(key);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return sRst;
     }
 
 }

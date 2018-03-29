@@ -7,15 +7,25 @@
  */
 package com.amosbo.maven.utis.hardware;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Vibrator;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
@@ -23,6 +33,7 @@ import com.amosbo.maven.utis.Constants;
 import com.amosbo.maven.utis.LogUtils;
 import com.amosbo.maven.utis.string.StringUtils;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 
@@ -119,13 +130,15 @@ public class DeviceUtils {
             String release = getRelease();
             String manufacturer = getManufacturer();
             String platform = "Android";
+            String IMEI = getIME(application);
+            String IP = NetUtils.getIpAddress();
             simOperatorName = StringUtils.dealWithStringSpace(simOperatorName);
             LogUtils.i(Constants.TAG, "Version:" + appVersion + " VersionCode:" + appVersionCode
                     + " Brand:" + brand + "" +
                     " SimOperatorName:" + simOperatorName
                     + " Model:" + model + " Release" + release + " Manufacturer" + manufacturer +
                     " " +
-                    "SDK:" + SDK + " Platform:" + platform);
+                    "SDK:" + SDK + " Platform:" + platform + " IMEI:" + IMEI + " IP:" + IP);
             mPhoneInfo.setAppVersionCode(appVersionCode);
             mPhoneInfo.setAppVersion(appVersion);
             mPhoneInfo.setBrand(brand);
@@ -135,6 +148,8 @@ public class DeviceUtils {
             mPhoneInfo.setRelease(release);
             mPhoneInfo.setManufacturer(manufacturer);
             mPhoneInfo.setPlatform(platform);
+            mPhoneInfo.setImei(IMEI);
+            mPhoneInfo.setIp(IP);
         }
         return mPhoneInfo;
     }
@@ -288,7 +303,135 @@ public class DeviceUtils {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-
         return result;
+    }
+
+
+    /**
+     * 状态栏高度
+     *
+     * @return int
+     */
+    public int getStatusBarHeight(@NonNull Application application) {
+        Class<?> c = null;
+        Object obj = null;
+        Field field = null;
+        int x = 0, sbar = 0;
+        try {
+            c = Class.forName("com.android.internal.R$dimen");
+            obj = c.newInstance();
+            field = c.getField("status_bar_height");
+            x = Integer.parseInt(field.get(obj).toString());
+            sbar = application.getApplicationContext().getResources().getDimensionPixelSize
+                    (x);
+            return sbar;
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+        return sbar;
+    }
+
+    /**
+     * 得到本机手机号,未安装SIM卡或者SIM卡中未写入手机号，都会获取不到
+     *
+     * @return String
+     */
+    @SuppressLint("HardwareIds")
+    public static String getPhoneNumber(Application app) {
+        TelephonyManager tm = (TelephonyManager) app.getApplicationContext()
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        if (ActivityCompat.checkSelfPermission(app, Manifest.permission.READ_SMS) !=
+                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(app,
+                Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            return "";
+        }
+        return tm.getLine1Number();
+    }
+
+    /**
+     * 获取唯一标识
+     *
+     * @return String
+     */
+    @SuppressLint("HardwareIds")
+    private static String getIME(Application app) {
+        TelephonyManager tm = (TelephonyManager) app.getApplicationContext()
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        String imei = "";
+        try {
+            if (ActivityCompat.checkSelfPermission(app, Manifest.permission.READ_PHONE_STATE) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                return "";
+            }
+            imei = tm.getDeviceId();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (TextUtils.isEmpty(imei)) {
+            try {
+                imei = Settings.Secure.getString(app.getApplicationContext()
+                        .getContentResolver(), Settings.Secure.ANDROID_ID);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return imei;
+    }
+
+    /**
+     * 打电话
+     *
+     * @param phone String
+     */
+    public static void callPhone(@NonNull String phone, @NonNull Application application) {
+        Intent phoneIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:"
+                + phone));
+        application.getApplicationContext().startActivity(phoneIntent);
+    }
+
+    /**
+     * 发短信
+     *
+     * @param phone   String
+     * @param content String
+     */
+    public static void sendSMS(@NonNull Application app, @NonNull String phone, String content) {
+        Uri uri = null;
+        if (!TextUtils.isEmpty(phone)) {
+            uri = Uri.parse("smsto:" + phone);
+            Intent intent = new Intent(Intent.ACTION_SENDTO, uri);
+            intent.putExtra("sms_body", content);
+            app.getApplicationContext().startActivity(intent);
+        }
+    }
+
+    /**
+     * 屏幕分辨率
+     *
+     * @return float
+     */
+    public static float getDip(@NonNull Application app) {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                app.getApplicationContext().getResources().getDisplayMetrics());
+    }
+
+    /**
+     * 开始震动
+     *
+     * @param context Context
+     * @param repeat  0重复 -1不重复
+     * @param pattern long
+     */
+    @SuppressLint("NewApi")
+    public synchronized void doVibrate(Context context, int repeat,
+                                       long... pattern) {
+        if (pattern == null) {
+            pattern = new long[]{1000, 1000, 1000};
+        }
+        Vibrator mVibrator = (Vibrator) context
+                .getSystemService(Context.VIBRATOR_SERVICE);
+        if (mVibrator.hasVibrator()) {
+            mVibrator.vibrate(pattern, repeat);
+        }
     }
 }

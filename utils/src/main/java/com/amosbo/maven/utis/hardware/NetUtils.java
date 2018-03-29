@@ -6,6 +6,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.telephony.TelephonyManager;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
+
 /**
  * @author : Amos_bo
  * @package: com.amosbo.maven.utis.hardware
@@ -24,7 +30,7 @@ public class NetUtils {
      *
      * @return int
      */
-    public int getNetType(Application app) {
+    public static int getNetType(Application app) {
         int type = 1;
         try {
             ConnectivityManager connectMgr = (ConnectivityManager) app.getApplicationContext()
@@ -49,13 +55,14 @@ public class NetUtils {
         }
         return type;
     }
+
     /**
      * 判断数据连接的类型
      *
      * @param networkType int
      * @return int
      */
-    public int getNetworkClass(int networkType) {
+    public static int getNetworkClass(int networkType) {
         switch (networkType) {
             case TelephonyManager.NETWORK_TYPE_GPRS:
             case TelephonyManager.NETWORK_TYPE_EDGE:
@@ -78,5 +85,51 @@ public class NetUtils {
             default:
                 return 0;
         }
+    }
+
+    /**
+     * 获取手机IP
+     *
+     * @return
+     */
+    public static String getIpAddress() {
+        try {
+            for (Enumeration<NetworkInterface> enNetI = NetworkInterface
+                    .getNetworkInterfaces(); enNetI.hasMoreElements(); ) {
+                NetworkInterface netI = enNetI.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = netI
+                        .getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (inetAddress instanceof Inet4Address && !inetAddress.isLoopbackAddress()) {
+                        return inetAddress.getHostAddress();
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    /**
+     * 网络是否可用
+     *
+     * @return
+     */
+    public boolean isActiveNetworkMobile(Application app) {
+        try {
+            ConnectivityManager connectivityManager = (ConnectivityManager) app
+                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager != null) {
+                NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                if (networkInfo != null && networkInfo.getType() == ConnectivityManager
+                        .TYPE_MOBILE) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
